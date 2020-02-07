@@ -9,29 +9,30 @@ import java.util.Scanner;
 3 3 2
 4 7 3
 5 2 3*/
-class Process implements Comparable<Process>{
-    public int pid;
-    public int burstTime;
-    public int arrivalTime;
-    public int completionTime;
-    public int waitingTime;
-    public int turnAroundTime;
-    Process(){
-        super();
-        pid = 0;
-        burstTime =0;
-        arrivalTime=0;
-        completionTime = 0;
-        waitingTime = 0;
-        turnAroundTime = 0;
-    }
-    @Override
-    public int compareTo(Process a){
-        return this.arrivalTime - a.arrivalTime;
-    }
-}
 
 public class FCFS {
+    static class Process implements Comparable<Process>{
+        public int pid;
+        public int burstTime;
+        public int arrivalTime;
+        public int completionTime;
+        public int waitingTime;
+        public int turnAroundTime;
+        Process(){
+            super();
+            pid = 0;
+            burstTime =0;
+            arrivalTime=0;
+            completionTime = 0;
+            waitingTime = 0;
+            turnAroundTime = 0;
+        }
+        @Override
+        public int compareTo(Process a){
+            return this.arrivalTime - a.arrivalTime;
+        }
+    }
+
     public static void main (String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();
