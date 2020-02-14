@@ -1,9 +1,13 @@
 package OperatingSystem;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Scanner;
-import java.util.TreeSet;
+import java.util.*;
+
+/*5
+1 8 0
+2 4 1
+3 3 2
+4 7 3
+5 2 3*/
 
 public class SJF_Preemptive {
     static class Process{
@@ -13,6 +17,7 @@ public class SJF_Preemptive {
         public int completionTime;
         public int waitingTime;
         public int turnAroundTime;
+        public int burstTimeCtr;
         Process(int pid, int burstTime, int arrivalTime){
             super();
             this.pid = pid;
@@ -21,6 +26,7 @@ public class SJF_Preemptive {
             this.completionTime = 0;
             this.waitingTime = 0;
             this.turnAroundTime = 0;
+            this.burstTimeCtr = burstTime;
         }
     }
 
@@ -37,7 +43,7 @@ public class SJF_Preemptive {
 
     static class ProcessCmpBT implements Comparator<Process> {
         public int compare(Process a, Process b){
-            if(a.burstTime == b.burstTime){
+            if(a.burstTimeCtr == b.burstTimeCtr){
                 if(a.arrivalTime > b.arrivalTime){
                     return 1;
                 }
@@ -45,12 +51,20 @@ public class SJF_Preemptive {
                     return -1;
                 }
             }
-            else if(a.burstTime > b.burstTime){
+            else if(a.burstTimeCtr > b.burstTimeCtr){
                 return 1;
             }
             else{
                 return -1;
             }
+        }
+    }
+    public static class GANTT{
+        public int pid;
+        public int time;
+        GANTT(int pid, int time){
+            this.pid = pid;
+            this.time = time;
         }
     }
 
@@ -63,22 +77,43 @@ public class SJF_Preemptive {
         }
 
         int timeCounter = 0;
-        //int[][] gantt = new int[2][];
 
         TreeSet<Process> tree = new TreeSet<>(new ProcessCmpBT());
+        ArrayList<GANTT> Gantt = new ArrayList<>();
+        // completion time = (total time taken before completion of the task)
+        // turn around time = (completion time - arrival time)
+        // waiting time = (turn around time - burst time)
+        float wtAvg = 0, tatAvg = 0, ctAvg = 0;
+        System.out.println("5\n" +
+                "1 8 0\n" +
+                "2 4 1\n" +
+                "3 3 2\n" +
+                "4 7 3\n" +
+                "5 2 3");
+        System.out.println("\n\nProcessId | Burst Time | Arrival Time | Completion Time | Turn Around Time | Waiting Time");
         while(!p.isEmpty()){
             int AT = p.first().arrivalTime;
             int timeLapse = AT - timeCounter;
             if(!tree.isEmpty()){
                 while(timeLapse>0){
-                    System.out.println(tree.first().pid+" "+(AT-timeLapse));
-                    int BT = tree.first().burstTime;
+                    Gantt.add(new GANTT(tree.first().pid, (AT-timeLapse)));
+                    int BT = tree.first().burstTimeCtr;
                     if(BT <= timeLapse){
-                        tree.pollFirst();
+                        Process temp = tree.pollFirst();
+                        temp.completionTime = (AT-timeLapse-BT);
+                        temp.turnAroundTime = temp.completionTime - temp.arrivalTime;
+                        temp.waitingTime = temp.turnAroundTime - temp.burstTime;
+
+                        wtAvg = temp.waitingTime;
+                        tatAvg = temp.turnAroundTime;
+                        ctAvg = temp.completionTime;
+
+                        System.out.println("\t" + temp.pid + "\t\t\t" + temp.burstTime + "\t\t\t\t" + temp.arrivalTime + "\t\t\t\t" + temp.completionTime + "\t\t\t\t" + temp.turnAroundTime + "\t\t\t\t\t" + temp.waitingTime);
                         timeLapse -= BT;
+
                     }
                     else{
-                        tree.first().burstTime = BT - timeLapse;
+                        tree.first().burstTimeCtr = BT - timeLapse;
                         timeLapse = 0;
                     }
                 }
@@ -94,43 +129,32 @@ public class SJF_Preemptive {
         }
         while(!tree.isEmpty()){
             Process temp = tree.pollFirst();
-            System.out.println(temp.pid+" "+timeCounter);
-            timeCounter+=temp.burstTime;
-        }
-        System.out.println("  "+timeCounter);
-/*
-        // completion time = (total time taken before completion of the task)
-        // turn around time = (completion time - arrival time)
-        // waiting time = (turn around time - burst time)
 
-        int timeCounter=0;
+            Gantt.add(new GANTT(temp.pid, timeCounter));
 
-        // loop to find completion, waiting & turnaround time and make the gantt chart
-        for (int i = 0; i < n; i++){
+            timeCounter+=temp.burstTimeCtr;
+            temp.completionTime = (timeCounter);
+            temp.turnAroundTime = temp.completionTime - temp.arrivalTime;
+            temp.waitingTime= temp.turnAroundTime - temp.burstTime;
 
+            wtAvg += temp.waitingTime;
+            tatAvg += temp.turnAroundTime;
+            ctAvg += temp.completionTime;
+
+            System.out.println("\t" + temp.pid + "\t\t\t" + temp.burstTime + "\t\t\t\t" + temp.arrivalTime + "\t\t\t\t" + temp.completionTime + "\t\t\t\t" + temp.turnAroundTime + "\t\t\t\t\t" + temp.waitingTime);
         }
 
-        System.out.println("GANTT CHART :-");
-        for (int i = 0; i < n; i++) {
-            System.out.print("p" + gantt[0][i] + "\t");
-        }
-        System.out.println("");
-        for (int i = 0; i < n; i++) {
-            System.out.print(gantt[1][i] + "\t");
-        }
-        System.out.println(timeCounter);
-
-        float wtAvg = 0, tatAvg = 0, ctAvg = 0;
-        System.out.println("\n\nProcessId | Burst Time | Arrival Time | Completion Time | Turn Around Time | Waiting Time");
-        // printing values and computing averages
-        for (int i = 0; i < n; i++) {
-            wtAvg += p[i].waitingTime;
-            ctAvg += p[i].completionTime;
-            tatAvg += p[i].turnAroundTime;
-            System.out.println("\t" + p[i].pid + "\t\t\t" + p[i].burstTime + "\t\t\t\t" + p[i].arrivalTime + "\t\t\t\t" + p[i].completionTime + "\t\t\t\t" + p[i].turnAroundTime + "\t\t\t\t\t" + p[i].waitingTime);
-        }
         System.out.println("__________________________________________________________________________________________");
         System.out.println("\t\t\t\t\t\t\t\t\tAVERAGE :- " + ctAvg / n + "\t\t\t\t" + tatAvg / n + "\t\t\t\t" + wtAvg / n);
-*/
+
+        System.out.print("\nGANTT CHART:\n");
+        for(GANTT slot: Gantt){
+            System.out.print(" p"+slot.pid+" ");
+        }
+        System.out.println("");
+        for(GANTT slot: Gantt){
+            System.out.print(" "+slot.time+"  ");
+        }
+        System.out.println(timeCounter);
     }
 }
